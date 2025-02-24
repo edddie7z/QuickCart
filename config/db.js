@@ -23,7 +23,7 @@ async function connectDB() {
       });
   }
 
-  cached.conn = await cached.promised;
+  cached.conn = await cached.promise;
   return cached.conn;
 }
 
