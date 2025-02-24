@@ -15,13 +15,13 @@ async function connectDB() {
     const opts = {
       bufferCommands: false,
     };
-  }
 
-  cached.promise = (
-    await mongoose.connect(`${process.env.MONGODB_URI}/quickcart`, opts)
-  ).then((mongoose) => {
-    return mongoose;
-  });
+    cached.promise = (
+      await mongoose.connect(`${process.env.MONGODB_URI}/quickcart`, opts)
+    ).then((mongoose) => {
+      return mongoose;
+    });
+  }
 
   cached.conn = await cached.promised;
   return cached.conn;
