@@ -1,17 +1,24 @@
 import { v2 as cloudinary } from "cloudinary";
+import { auth } from "@clerk/nextjs/server";
 import { getAuth } from "@clerk/nextjs/server";
 import authSeller from "@/lib/authSeller";
+import Product from "@/models/Products";
+import { NextResponse } from "next/server";
+import connectDB from "@/config/db";
 
 // Configure Cloudinary
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
-  api_secrete: process.env.CLOUDINARY_API_SECRET,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
 export async function POST(request) {
+  // console.log("outside try catch in post");
+
   try {
-    const { userId } = getAuth();
+    const { userId } = getAuth(request);
+
     const isSeller = await authSeller(userId);
 
     if (!isSeller) {
@@ -20,7 +27,10 @@ export async function POST(request) {
 
     const formData = await request.formData();
 
+    // console.log(formData);
+
     const name = formData.get("name");
+    console.log(name);
     const description = formData.get("description");
     const category = formData.get("category");
     const price = formData.get("price");
@@ -29,6 +39,7 @@ export async function POST(request) {
     const files = formData.getAll("images");
 
     if (!files || files.length === 0) {
+      console.log(files);
       return NextResponse.json({
         success: false,
         message: "no files uploaded",
@@ -57,5 +68,29 @@ export async function POST(request) {
     );
 
     const image = result.map((result) => result.secure_url);
-  } catch (error) {}
+
+    await connectDB();
+    const newProduct = await Product.create({
+      userId,
+      name,
+      description,
+      category,
+      price: Number(price),
+      offerPrice: Number(offerPrice),
+      image,
+      date: Date.now(),
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: "Upload successful",
+      newProduct,
+    });
+  } catch (error) {
+    console.log(error);
+    return NextResponse.json({
+      success: false,
+      message: "error",
+    });
+  }
 }
